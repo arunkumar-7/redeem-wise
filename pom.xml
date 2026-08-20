@@ -39,7 +39,7 @@
         <spring-cloud.version>2023.0.1</spring-cloud.version>
 
         <!-- Lombok -->
-        <lombok.version>1.18.32</lombok.version>
+        <lombok.version>1.18.36</lombok.version>
     </properties>
 
     <dependencyManagement>
@@ -56,12 +56,6 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- Lombok (common to all modules) -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
     </dependencies>
 
     <build>

@@ -41,3 +41,20 @@ management:
   endpoint:
     health:
       show-details: always
+
+app:
+  jwt:
+    secret: YXJ1bmRld2lzZWFuZ3VsYXJrYXJkZXJlZGVlbXdpc2Vwcm9qZWN0and0c2VjcmV0a2V5MTIzNDU2Nzg5MDEyMzQ1Njc4OTA=
+    expiration: 86400000
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+logging:
+  level:
+    com.redeemwise.auth: INFO
+    org.springframework.security: DEBUG
