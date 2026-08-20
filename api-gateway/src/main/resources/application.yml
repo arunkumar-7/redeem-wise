@@ -1,6 +1,61 @@
 spring:
   application:
     name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        # Auth Service Routes
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=0
+
+        # Card Service Routes
+        - id: card-service
+          uri: lb://card-service
+          predicates:
+            - Path=/api/cards/**
+          filters:
+            - StripPrefix=0
+
+        # Reward Service Routes
+        - id: reward-service
+          uri: lb://reward-service
+          predicates:
+            - Path=/api/rewards/**
+          filters:
+            - StripPrefix=0
+
+        # Recommendation Service Routes
+        - id: recommendation-service
+          uri: lb://recommendation-service
+          predicates:
+            - Path=/api/recommendations/**, /api/dashboard/**
+          filters:
+            - StripPrefix=0
+
+      # Global CORS Configuration
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders:
+              - Authorization
+              - Content-Type
+              - Accept
+              - Origin
+              - X-Requested-With
+            allowCredentials: true
+            maxAge: 3600
 
 server:
   port: 8080
@@ -16,7 +71,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,gateway
   endpoint:
     health:
       show-details: always
+    gateway:
+      enabled: true
+
+logging:
+  level:
+    com.redeemwise.gateway: INFO
+    org.springframework.cloud.gateway: INFO
