@@ -1,0 +1,422 @@
+{
+  "info": {
+    "name": "RedeemWise Recommendation Service API",
+    "description": "Test collection for the Recommendation Service endpoints. Includes requests for generating recommendations, dashboard summaries, and health checks.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8084"
+    },
+    {
+      "key": "gatewayUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "GET /api/recommendations/health",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations", "health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Service is UP', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('UP');",
+                  "    pm.expect(json.service).to.eql('recommendation-service');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Recommendations",
+      "item": [
+        {
+          "name": "POST /api/recommendations - HDFC Infinia with 15000 points",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardId\": 1,\n  \"availablePoints\": 15000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has data', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.data).to.not.be.null;",
+                  "    pm.expect(json.data.cardId).to.eql(1);",
+                  "    pm.expect(json.data.cardName).to.eql('HDFC Infinia Metal Edition');",
+                  "    pm.expect(json.data.bankName).to.eql('HDFC Bank');",
+                  "    pm.expect(json.data.availablePoints).to.eql(15000);",
+                  "});",
+                  "",
+                  "pm.test('Best recommendation exists', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.data.bestRecommendation).to.not.be.null;",
+                  "    pm.expect(json.data.bestRecommendation.isEligible).to.be.true;",
+                  "    pm.expect(json.data.bestRecommendation.valuePerPoint).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test('Recommendations are ranked by VPP descending', function () {",
+                  "    var json = pm.response.json();",
+                  "    var recs = json.data.recommendations;",
+                  "    pm.expect(recs.length).to.be.above(0);",
+                  "    for (var i = 0; i < recs.length - 1; i++) {",
+                  "        pm.expect(recs[i].valuePerPoint).to.be.at.least(recs[i+1].valuePerPoint);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test('Generated timestamp exists', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.data.generatedAt).to.not.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/recommendations - Axis Atlas with 5000 points (Air Miles card)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardId\": 16,\n  \"availablePoints\": 5000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Axis Atlas card details', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.data.cardName).to.eql('Axis Atlas');",
+                  "    pm.expect(json.data.bankName).to.eql('Axis Bank');",
+                  "    pm.expect(json.data.rewardType).to.eql('AIR_MILES');",
+                  "});",
+                  "",
+                  "pm.test('Has multiple redemption options', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.data.recommendations.length).to.be.above(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/recommendations - With category filter",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardId\": 1,\n  \"availablePoints\": 10000,\n  \"categoryFilter\": \"FLIGHT\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Only FLIGHT options returned', function () {",
+                  "    var json = pm.response.json();",
+                  "    var recs = json.data.recommendations;",
+                  "    recs.forEach(function(rec) {",
+                  "        pm.expect(rec.category).to.eql('FLIGHT');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/recommendations - Low points (some ineligible)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardId\": 1,\n  \"availablePoints\": 100\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Has ineligible options', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.data.ineligibleOptions.length).to.be.above(0);",
+                  "    json.data.ineligibleOptions.forEach(function(opt) {",
+                  "        pm.expect(opt.isEligible).to.be.false;",
+                  "        pm.expect(opt.ineligibilityReason).to.not.be.null;",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/recommendations - Validation error (missing cardId)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availablePoints\": 5000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Validation error message', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.error).to.eql('Validation Error');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/recommendations - Card not found (id: 999)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardId\": 999,\n  \"availablePoints\": 5000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Not found message', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.message).to.contain('999');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "GET /api/recommendations/dashboard - HDFC Infinia",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/recommendations/dashboard?cardId=1&availablePoints=15000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recommendations", "dashboard"],
+              "query": [
+                {
+                  "key": "cardId",
+                  "value": "1"
+                },
+                {
+                  "key": "availablePoints",
+                  "value": "15000"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Dashboard has card details', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.data.cardId).to.eql(1);",
+                  "    pm.expect(json.data.cardName).to.eql('HDFC Infinia Metal Edition');",
+                  "    pm.expect(json.data.totalAvailablePoints).to.eql(15000);",
+                  "});",
+                  "",
+                  "pm.test('Dashboard has metrics', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.data.totalRedemptionOptions).to.be.above(0);",
+                  "    pm.expect(json.data.eligibleOptions).to.be.above(0);",
+                  "    pm.expect(json.data.estimatedMaxValue).to.be.above(0);",
+                  "    pm.expect(json.data.averageValuePerPoint).to.be.above(0);",
+                  "});",
+                  "",
+                  "pm.test('Best option exists', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.data.bestOption).to.not.be.null;",
+                  "    pm.expect(json.data.bestOption.isEligible).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/recommendations/dashboard via Gateway",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{gatewayUrl}}/api/recommendations/dashboard?cardId=1&availablePoints=10000",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["api", "recommendations", "dashboard"],
+              "query": [
+                {
+                  "key": "cardId",
+                  "value": "1"
+                },
+                {
+                  "key": "availablePoints",
+                  "value": "10000"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 via Gateway', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Gateway routes correctly', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.data).to.not.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
