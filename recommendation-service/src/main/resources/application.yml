@@ -5,26 +5,9 @@ spring:
 server:
   port: 8084
 
-spring.datasource:
-  url: jdbc:mysql://localhost:3306/redeemwise_recommendation?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-  username: root
-  password: root
-  driver-class-name: com.mysql.cj.jdbc.Driver
-  hikari:
-    maximum-pool-size: 20
-    minimum-idle: 5
-    idle-timeout: 300000
-    max-lifetime: 1200000
-    connection-timeout: 30000
 
-jpa:
-  hibernate:
-    ddl-auto: update
-  show-sql: false
-  properties:
-    hibernate:
-      dialect: org.hibernate.dialect.MySQLDialect
-      format_sql: true
+
+
 
 eureka:
   client:
@@ -32,6 +15,27 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true
+
+# OpenFeign Configuration
+spring.cloud.openfeign:
+  client:
+    config:
+      card-service:
+        connect-timeout: 5000
+        read-timeout: 5000
+      reward-service:
+        connect-timeout: 5000
+        read-timeout: 5000
+  circuitbreaker:
+    enabled: false
+
+# SpringDoc OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
 
 management:
   endpoints:
@@ -41,3 +45,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    com.redeemwise.recommendation: INFO
